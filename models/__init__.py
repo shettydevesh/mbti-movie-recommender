@@ -1,0 +1,1 @@
+from .mbti_recommendations import MBTI_Recommendation

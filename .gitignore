@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#Faiss Index Folder
+/index
+
 # C extensions
 *.so
 
