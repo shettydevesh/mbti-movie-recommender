@@ -2,7 +2,7 @@
 
 MBTI Movie Recommender is an AI-powered system that suggests movies based on Myers-Briggs Type Indicator (MBTI) personality types. The system leverages advanced natural language processing techniques to match movie characteristics with personality preferences.
 
-<!-- ![MBTI Movie Recommender Demo](assets/demo.png) -->
+<!---[MBTI Movie Recommender Architecture](assets/architecture.png) --->
 
 ## Features
 
@@ -10,7 +10,6 @@ MBTI Movie Recommender is an AI-powered system that suggests movies based on Mye
 - **AI-Powered Matching**: Uses state-of-the-art transformer models for semantic matching
 - **Two-Stage Ranking**: Fast vector search with FAISS followed by precise cross-encoder reranking
 - **Streamlit Web Interface**: User-friendly web application for exploring recommendations
-- **Command Line Interface**: Quick access to recommendations via CLI
 
 ## Architecture
 
@@ -26,8 +25,6 @@ The recommendation system uses a two-stage approach:
    - Provides more accurate relevance scores
    - Combines with popularity metrics for final ranking
 
-<!-- ![Architecture Diagram](assets/architecture.png) -->
-
 ## Installation
 
 ### Prerequisites
@@ -35,26 +32,22 @@ The recommendation system uses a two-stage approach:
 - Python 3.8+
 - pip
 
-### Option 1: Install from PyPI
+### Setup
 
+1. Clone the repository
 ```bash
-pip install mbti-movie-recommender
-```
-
-### Option 2: Install from Source
-
-```bash
-git clone https://github.com/yourusername/mbti-movie-recommender.git
+git clone https://github.com/devesh-shetty/mbti-movie-recommender.git
 cd mbti-movie-recommender
-pip install -e .
 ```
 
-### Option 3: Docker
-
+2. Install required packages
 ```bash
-docker pull yourusername/mbti-movie-recommender
-docker run -p 8501:8501 yourusername/mbti-movie-recommender
+pip install -r requirements.txt
 ```
+
+3. Prepare your movie dataset
+   - Place your movie dataset as `movies_dataset.csv` in the `data` directory
+   - Ensure it has the required columns: title, genres, keywords
 
 ## Usage
 
@@ -63,32 +56,21 @@ docker run -p 8501:8501 yourusername/mbti-movie-recommender
 To launch the Streamlit web application:
 
 ```bash
-cd mbti-movie-recommender
-streamlit run streamlit_app.py
+streamlit run app.py
 ```
 
 Then open your browser and navigate to http://localhost:8501
 
-### Command Line Interface
-
-Get movie recommendations directly from the command line:
-
-```bash
-# Basic usage
-mbti-recommend --mbti INTJ
-
-# Advanced options
-mbti-recommend --mbti ENFP --top-n 15 --output recommendations.csv
-```
-
 ### Python API
+
+You can also use the recommendation system directly in your Python code:
 
 ```python
 from models.mbti_recommendations import MBTI_Recommendation
 from constants import mbti_mapping
 
 # Initialize the recommendation system
-recommender = MBTI_Recommendation(dataset="movies_dataset.csv")
+recommender = MBTI_Recommendation(dataset="data/movies_dataset.csv")
 
 # Get recommendations for a specific MBTI type
 meta_data = mbti_mapping["INTJ"]
@@ -98,7 +80,7 @@ recommendations = recommender.recommend(meta_data, top_n=10)
 print(recommendations[["title", "final_score", "genres"]])
 ```
 
-## Dataset
+## Dataset Requirements
 
 The recommendation system requires a movie dataset with at least the following columns:
 
@@ -114,21 +96,57 @@ Optional but recommended columns:
 - `revenue`: Box office revenue
 - `tagline`: Movie tagline
 
-You can use a custom dataset or scrape one from sources like TMDB.
+## Technical Details
+
+### AI Models
+
+- **Embedding Model**: `sentence-transformers/all-roberta-large-v1` for semantic embeddings
+- **Reranker Model**: `cross-encoder/ms-marco-electra-base` for precise relevance scoring
+
+### Key Components
+
+- **SentenceTransformer**: Generates embeddings for movies and MBTI preferences
+- **CrossEncoder**: Performs precise scoring between query and candidate movies
+- **FAISS**: Efficient similarity search for retrieving candidates
+- **Streamlit**: Interactive web interface for user interaction
+
+### Recommendation Algorithm
+
+1. **Query Processing**: Convert MBTI preferences into a semantic query
+2. **Candidate Retrieval**: Use FAISS to find potentially relevant movies
+3. **Reranking**: Score candidates with the cross-encoder model
+4. **Final Scoring**: Combine semantic relevance with popularity metrics
+5. **Result Presentation**: Return and display top-ranked movies
 
 ## Configuration
 
-The system is highly configurable. Key settings can be found in `config.py`:
+The system is configurable through `config.py`:
 
-- Model selection
-- Weights for different features
-- Paths for data and indices
-- Default parameters
+```python
+# Model configurations
+DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-roberta-large-v1"
+DEFAULT_RERANKER_MODEL = "cross-encoder/ms-marco-electra-base"
+
+# Default weights
+DEFAULT_GENRE_WEIGHT = 0.7
+DEFAULT_KEYWORD_WEIGHT = 0.3
+DEFAULT_RELEVANCE_WEIGHT = 0.7
+DEFAULT_POPULARITY_WEIGHT = 0.3
+```
+
+## Performance Optimization
+
+- **FAISS Integration**: Fast similarity search using Facebook AI Similarity Search
+- **Batch Processing**: Efficient processing of movie embeddings
+- **GPU Acceleration**: Automatically uses GPU if available
+- **Index Caching**: Save and reuse FAISS indices for faster startup
 
 ## Project Structure
 
 ```
 mbti-movie-recommender/
+├── app.py                 # Streamlit web interface
+├── config.py              # Configuration settings
 ├── constants/
 │   ├── __init__.py
 │   └── variables.py       # MBTI personality type mappings
@@ -139,29 +157,23 @@ mbti-movie-recommender/
 │   ├── __init__.py
 │   ├── mbti_data.py       # MBTI data management
 │   └── utilities.py       # Utility functions
-├── streamlit_app.py       # Streamlit web interface
-├── cli.py                 # Command line interface
-├── config.py              # Configuration settings
-├── setup.py               # Installation script
+├── data/                  # Directory for datasets
+├── index/                 # Directory for FAISS indices
 └── README.md              # Documentation
 ```
 
-## Performance Optimization
+## Dependencies
 
-- **FAISS Integration**: Fast similarity search using Facebook AI Similarity Search
-- **Batch Processing**: Efficient processing of movie embeddings
-- **GPU Acceleration**: Automatically uses GPU if available
-- **Index Caching**: Save and reuse FAISS indices for faster startup
-
-## Contribution
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Main dependencies include:
+- streamlit
+- pandas
+- numpy
+- faiss-cpu (or faiss-gpu)
+- sentence-transformers
+- torch
+- tqdm
+- requests
+- Pillow
 
 ## License
 
