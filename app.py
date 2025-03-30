@@ -5,6 +5,7 @@ import uuid
 import logging
 from pathlib import Path
 import sys
+import random
 
 # Add project root to path to allow imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -34,19 +35,28 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# CSS for styling
+# CSS for styling - updated for new design
 st.markdown(
     """
 <style>
     .main-header {
         font-size: 2.5rem;
         font-weight: bold;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
+        text-align: center;
     }
-    .sub-header {
-        font-size: 1.5rem;
-        font-weight: bold;
+    .personality-keywords {
+        font-size: 1.2rem;
         margin-bottom: 1rem;
+        text-align: center;
+    }
+    .personality-description {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
     }
     .mbti-card {
         background-color: #f0f2f6;
@@ -57,9 +67,65 @@ st.markdown(
     .movie-card {
         background-color: white;
         border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 1rem;
+        padding: 0;
+        margin-bottom: 1.5rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .movie-poster-container {
+        position: relative;
+    }
+    .movie-year {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    .movie-content {
+        padding: 1rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .movie-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .genre-tag {
+        display: inline-block;
+        background-color: #f0f2f6;
+        color: #333;
+        padding: 3px 10px;
+        border-radius: 15px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        font-size: 0.8rem;
+    }
+    .movie-overview {
+        margin-top: 0.8rem;
+        margin-bottom: 1rem;
+        flex-grow: 1;
+    }
+    .match-reason {
+        border-top: 1px solid #eee;
+        padding-top: 0.8rem;
+        margin-top: 0.5rem;
+    }
+    .match-label {
+        font-weight: bold;
+        margin-bottom: 0.3rem;
+    }
+    .match-explanation {
+        font-style: italic;
+        color: #555;
     }
     .footer {
         font-size: 0.8rem;
@@ -140,6 +206,48 @@ def get_recommendations(mbti_type, top_n=10):
         return None
 
 
+def get_match_explanation(mbti_type, movie):
+    """Generate a personalized explanation for why a movie matches the MBTI type."""
+    # Dictionary of explanation templates for each MBTI type
+    explanations = {
+        "INTJ": [
+            "Appeals to your strategic mindset with complex plot development and innovative concepts.",
+            "Features a methodical protagonist solving intricate problems, aligning with your analytical approach.",
+            "Explores visionary ideas and systematic thinking that resonate with your long-term perspective.",
+        ],
+        "INTP": [
+            "Follows a brilliant mind exploring complex problems and theories, appealing to INTP's love for abstract thinking.",
+            "Showcases logical problem-solving and the life of a misunderstood genius, resonating with INTP's intellectual approach.",
+            "Explores the nature of consciousness and theoretical concepts, providing the theoretical depth INTPs crave.",
+            "Presents fascinating logical puzzles and abstract concepts that engage your analytical curiosity.",
+        ],
+        "ENTJ": [
+            "Features strong leadership themes and strategic decision-making that align with your decisive nature.",
+            "Showcases efficiency and structured approaches to overcoming obstacles.",
+            "Appeals to your appreciation for ambition and objective problem-solving in high-stakes situations.",
+        ],
+        "ENTP": [
+            "Full of creative possibilities and inventive problem-solving that appeal to your innovative thinking.",
+            "Features witty dialogue and unconventional approaches that match your love of debate and mental challenges.",
+            "Balances humor with complex ideas, engaging your curiosity and love for theoretical exploration.",
+        ],
+        # Add more for other types...
+    }
+
+    # Get explanations for the given MBTI type, or use a generic one if not found
+    type_explanations = explanations.get(
+        mbti_type,
+        [
+            "Aligns with your personality preferences and cognitive style.",
+            "Features themes and characters that resonate with your MBTI type.",
+            "Presents a narrative and perspective that matches your personality preferences.",
+        ],
+    )
+
+    # Select a random explanation from the list
+    return random.choice(type_explanations)
+
+
 # Sidebar
 with st.sidebar:
     st.title("MBTI Movie Recommender")
@@ -205,65 +313,33 @@ with st.sidebar:
     )
 
 # Main content
-st.markdown(
-    '<div class="main-header">MBTI Movie Recommender</div>', unsafe_allow_html=True
-)
-
-# MBTI type information
-if selected_type:
-    col1, col2 = st.columns([1, 2])
-
-    with col1:
-        # Display MBTI type card
-        st.markdown(
-            f'<div class="sub-header">{selected_type} - {mbti_descriptions[selected_type].split(" - ")[0]}</div>',
-            unsafe_allow_html=True,
-        )
-
-        # Display genres and keywords
-        meta_data = mbti_mapping.get(selected_type, {})
-        genres = meta_data.get("genres", [])
-        keywords = meta_data.get("keywords", [])
-
-        st.markdown('<div class="mbti-card">', unsafe_allow_html=True)
-        st.markdown(
-            f"**Description**: {mbti_descriptions[selected_type].split(' - ')[1]}"
-        )
-        st.markdown("**Preferred Genres**")
-        for genre in genres:
-            st.markdown(f"- {genre.title()}")
-
-        st.markdown("**Personality Keywords**")
-        for keyword in keywords:
-            st.markdown(f"- {keyword.title()}")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with col2:
-        # MBTI description and explanation
-        st.markdown("### How We Match Movies to Your Personality")
-        st.markdown(
-            """
-        The recommendation engine analyzes your MBTI personality type's preferences and matches them with movies using:
-        
-        1. **AI-Powered Semantic Matching**: We use advanced natural language models to understand the deeper meaning behind movie genres and keywords.
-        
-        2. **Personality Alignment**: Your MBTI profile provides insights into the stories, themes, and character arcs that might resonate with you.
-        
-        3. **Two-Stage Ranking**: First, we find potential matches using fast vector search, then we re-rank them using a sophisticated cross-encoder model.
-        
-        This creates a personalized recommendation experience that goes beyond simple genre matching.
-        """
-        )
-
-# Movie recommendations
 if st.session_state.recommendations is not None:
+    # Get type information
+    type_name = mbti_descriptions[selected_type].split(" - ")[0]
+    type_description = mbti_descriptions[selected_type].split(" - ")[1]
+
+    # Get keywords (personality traits)
+    keywords = mbti_mapping.get(selected_type, {}).get("keywords", [])
+    formatted_keywords = " • ".join([keyword.capitalize() for keyword in keywords[:5]])
+
+    # Display header with MBTI type information
     st.markdown(
-        '<div class="sub-header">Your Personalized Movie Recommendations</div>',
+        f'<div class="main-header">Movies for {selected_type}: {type_name}</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f'<div class="personality-keywords">{formatted_keywords}</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f'<div class="personality-description">{type_description} Here are some movies that might resonate with your personality type.</div>',
         unsafe_allow_html=True,
     )
 
     # Display recommendations in a grid
-    num_cols = 2
+    num_cols = 3  # Show 3 movies per row
     recommendations = st.session_state.recommendations.to_dict(orient="records")
 
     for i in range(0, len(recommendations), num_cols):
@@ -275,26 +351,84 @@ if st.session_state.recommendations is not None:
                 with cols[j]:
                     st.markdown('<div class="movie-card">', unsafe_allow_html=True)
 
-                    # Movie poster
+                    # Movie poster with year overlay
+                    st.markdown(
+                        '<div class="movie-poster-container">', unsafe_allow_html=True
+                    )
                     if "poster_path" in movie and movie["poster_path"]:
                         try:
                             poster = fetch_movie_poster(movie["poster_path"])
                             if poster:
-                                st.image(poster, width=200)
+                                st.image(poster, use_container_width=True)
                         except Exception as e:
-                            st.warning("Poster not available")
-
-                    # Movie info
-                    st.markdown(format_movie_info(movie))
-
-                    # Add to favorites button
-                    if st.button(f"Add to Favorites", key=f"fav_{idx}"):
-                        movie_title = movie.get("title", "Unknown")
-                        save_user_preferences(
-                            st.session_state.user_id, selected_type, [movie_title]
+                            st.image(
+                                "https://via.placeholder.com/300x450?text=No+Poster",
+                                use_container_width=True,
+                            )
+                    else:
+                        st.image(
+                            "https://via.placeholder.com/300x450?text=No+Poster",
+                            use_container_width=True,
                         )
-                        st.success(f"Added {movie_title} to your favorites!")
 
+                    # Year (can be added if available in your data)
+                    release_year = (
+                        movie.get("release_date", "").split("-")[0]
+                        if movie.get("release_date", "")
+                        else "N/A"
+                    )
+                    st.markdown(
+                        f'<div class="movie-year">{release_year}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                    # Movie content
+                    st.markdown('<div class="movie-content">', unsafe_allow_html=True)
+
+                    # Title
+                    title = movie.get("title", "Unknown Title")
+                    st.markdown(
+                        f'<div class="movie-title">{title}</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                    # Genres as tags
+                    genres = movie.get("genres", [])
+                    if isinstance(genres, list) and genres:
+                        genre_html = ""
+                        for genre in genres[:3]:  # Limit to 3 genres
+                            genre_html += (
+                                f'<span class="genre-tag">{genre.title()}</span>'
+                            )
+                        st.markdown(genre_html, unsafe_allow_html=True)
+
+                    # Overview
+                    overview = movie.get("overview", "No overview available")
+                    if isinstance(overview, str):
+                        truncated_overview = (
+                            overview[:150] + "..." if len(overview) > 150 else overview
+                        )
+                    else:
+                        truncated_overview = "No overview available"
+                    st.markdown(
+                        f'<div class="movie-overview">{truncated_overview}</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                    # Match explanation
+                    match_explanation = get_match_explanation(selected_type, movie)
+                    st.markdown(
+                        f"""
+                        <div class="match-reason">
+                            <div class="match-label">Why it matches your type:</div>
+                            <div class="match-explanation">{match_explanation}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    st.markdown("</div>", unsafe_allow_html=True)
                     st.markdown("</div>", unsafe_allow_html=True)
 else:
     # Welcome message when no recommendations yet

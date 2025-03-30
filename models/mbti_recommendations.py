@@ -362,7 +362,7 @@ class MBTI_Recommendation:
             available_columns = [
                 col for col in result_columns if col in candidates.columns
             ]
-
+            logger.info(f"Got {len(candidates)} movies for the Meta-Data: {meta_data}")
             return candidates.head(top_n)[available_columns]
 
         except Exception as e:
