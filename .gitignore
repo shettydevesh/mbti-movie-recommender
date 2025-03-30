@@ -6,6 +6,9 @@ __pycache__/
 #Faiss Index Folder
 /index
 
+#Dataset Folder
+/data
+
 # C extensions
 *.so
 
